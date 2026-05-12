@@ -1,0 +1,35 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: NuGet/setup-nuget@v2
+
+      - uses: actions/cache@v4
+        with:
+          path: packages
+          key: nuget-${{ hashFiles('main/packages.config') }}
+          restore-keys: nuget-
+
+      - name: Restore NuGet packages
+        run: nuget restore unlock.sln
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Build
+        run: msbuild unlock.sln /p:Configuration=Release /p:Platform="Any CPU" /m
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DecoyRequest
+          path: main/bin/Release/DecoyRequest.exe

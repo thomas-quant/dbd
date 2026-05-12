@@ -28,10 +28,10 @@ namespace DecoyRequest
             var cm = _proxy.CertificateManager;
             cm.EnsureRootCertificate();
 
-            if (!cm.IsRootCertificateTrusted())
+            if (!cm.IsRootCertificateUserTrusted())
                 cm.TrustRootCertificate();
 
-            return cm.IsRootCertificateTrusted();
+            return cm.IsRootCertificateUserTrusted();
         }
 
         public static void Start(ushort port)
@@ -44,7 +44,7 @@ namespace DecoyRequest
             _proxy.BeforeRequest += BeforeRequest;
             _proxy.BeforeResponse += BeforeResponse;
             _proxy.Start();
-            _proxy.SetAsSystemProxy(_endpoint, ProxyProtocolType.AllProtocols);
+            _proxy.SetAsSystemProxy(_endpoint, ProxyProtocolType.AllHttp);
         }
 
         public static void Stop()
@@ -52,7 +52,7 @@ namespace DecoyRequest
             if (_proxy == null) return;
             try
             {
-                _proxy.UnsetAsSystemProxy();
+                _proxy.DisableAllSystemProxies();
                 _proxy.BeforeRequest -= BeforeRequest;
                 _proxy.BeforeResponse -= BeforeResponse;
                 _proxy.Stop();
@@ -101,7 +101,7 @@ namespace DecoyRequest
                     if (Options.BloodwebExploit)
                         market.WithInventory();
 
-                    await e.Ok(market.Build(), new List<HttpHeader> { new HttpHeader("Content-Type", "application/json") });
+                    e.Ok(market.Build(), new List<HttpHeader> { new HttpHeader("Content-Type", "application/json") });
                     return;
                 }
                 #endregion
@@ -114,12 +114,12 @@ namespace DecoyRequest
                         var body = await e.GetRequestBodyAsString();
                         Cache.SelectedBanner = body;
                         Main.instance.SaveSettings();
-                        await e.Ok(body, new List<HttpHeader> { new HttpHeader("Content-Type", "application/json") });
+                        e.Ok(body, new List<HttpHeader> { new HttpHeader("Content-Type", "application/json") });
                         return;
                     }
                     if (e.HttpClient.Request.Url.EndsWith("/get") && Cache.SelectedBanner != null)
                     {
-                        await e.Ok(Cache.SelectedBanner, new List<HttpHeader> { new HttpHeader("Content-Type", "application/json") });
+                        e.Ok(Cache.SelectedBanner, new List<HttpHeader> { new HttpHeader("Content-Type", "application/json") });
                         return;
                     }
                 }
@@ -158,7 +158,7 @@ namespace DecoyRequest
                             array[i]["legacyPrestigeLevel"] = 3;
                         }
                         e.HttpClient.Response.StatusCode = 200;
-                        await e.SetResponseBodyString(getall.ToString(Newtonsoft.Json.Formatting.None));
+                        e.SetResponseBodyString(getall.ToString(Newtonsoft.Json.Formatting.None));
                     }
 
                     if (e.HttpClient.Request.Url.Contains("api/v1/dbd-character-data/bloodweb"))
@@ -176,7 +176,7 @@ namespace DecoyRequest
                             result_Response["legacyPrestigeLevel"] = Options.LegacyPrestigeLevel;
 
                             e.HttpClient.Response.StatusCode = 200;
-                            await e.SetResponseBodyString(result_Response.ToString(Newtonsoft.Json.Formatting.None));
+                            e.SetResponseBodyString(result_Response.ToString(Newtonsoft.Json.Formatting.None));
                         }
                     }
                 }
